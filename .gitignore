@@ -1,0 +1,42 @@
+# The directory Mix will write compiled artifacts to.
+/_build/
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix downloads your dependencies sources to.
+/deps/
+
+# Where third-party dependencies like ExDoc output generated docs.
+/doc/
+
+# Temporary files, for example, from tests.
+/tmp/
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Claude Code local tooling (skills, local settings).
+/.claude/
+
+# Ignore local helpers
+/helpers/
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+# Ignore internal planning/working docs, but keep the docs that ship with the
+# package and repo (README, CHANGELOG) and are referenced by mix.exs / ex_doc.
+*.md
+!README.md
+!CHANGELOG.md
+
+# Ignore package tarball and any extracted build output (from "mix hex.build").
+live_animate-*.tar
+/live_animate-*/
+
+# Playwright e2e dependencies and run artifacts (test/e2e is a node project).
+/test/e2e/node_modules/
+/test/e2e/test-results/
+/test/e2e/playwright-report/
+

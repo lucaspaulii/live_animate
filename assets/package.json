@@ -1,0 +1,12 @@
+{
+  "name": "live_animate",
+  "version": "0.1.0",
+  "description": "Declarative animations for Phoenix LiveView",
+  "main": "js/live_animate.js",
+  "module": "js/live_animate.js",
+  "files": [
+    "js/",
+    "css/"
+  ],
+  "license": "MIT"
+}
