@@ -1036,25 +1036,67 @@ const LiveAnimateHook = {
     // Binary in/out trigger via IntersectionObserver — no per-scroll-event
     // getBoundingClientRect on the main thread (the old approach forced a
     // layout read on every scroll tick, the exact jank this library exists to
-    // avoid). rootMargin shrinks the viewport to its central 80% band so the
-    // animation plays while the element is comfortably on screen, matching the
-    // previous top<90% / bottom>10% test.
+    // avoid).
+    //
+    // FEEDBACK-LOOP TRAP: the scroll animation moves the element via `translate`
+    // (slide-up shifts it 30px), and IntersectionObserver measures the element's
+    // *transformed* box. A single trigger band therefore oscillates forever at the
+    // band edge: playing "out" shoves the element back across the boundary → "in"
+    // → back out → "in"… (the "specific scroll point" infinite loop). The cure is a
+    // Schmitt trigger — enter on an inner band, exit only once the element is past a
+    // looser outer band, with a fixed px gap (HYSTERESIS) wider than any animation
+    // displacement so the element's own motion can never re-cross the opposite
+    // threshold. Margins are px (not %) so the gap is viewport-independent; both
+    // bands are rebuilt on resize since rootMargin is fixed at construction.
+    const HYSTERESIS = 60; // px gap between enter/exit bands; exceeds preset translates
     let inside = false;
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !inside) {
-          inside = true;
-          this._runAnimation("scroll", "in");
-        } else if (!entry.isIntersecting && inside) {
-          inside = false;
-          this._runAnimation("scroll", "out");
-          if (!repeat) observer.unobserve(this.el);
-        }
-      });
-    }, { rootMargin: "-10% 0px -10% 0px", threshold: 0 });
+    let enterObs = null;
+    let exitObs = null;
 
-    observer.observe(this.el);
-    this._observers.push(observer);
+    const teardown = () => {
+      enterObs?.disconnect();
+      exitObs?.disconnect();
+      window.removeEventListener("resize", build);
+    };
+
+    const build = () => {
+      enterObs?.disconnect();
+      exitObs?.disconnect();
+      // Inner band ≈ central 80% (matches the old -10% feel on desktop), but never
+      // tighter than HYSTERESIS so the gap below is always exactly HYSTERESIS.
+      const inset = Math.max(window.innerHeight * 0.10, HYSTERESIS);
+      const exitInset = inset - HYSTERESIS;
+      const enterMargin = `-${inset}px 0px -${inset}px 0px`;
+      const exitMargin = `-${exitInset}px 0px -${exitInset}px 0px`;
+
+      enterObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !inside) {
+            inside = true;
+            this._runAnimation("scroll", "in");
+          }
+        });
+      }, { rootMargin: enterMargin, threshold: 0 });
+
+      exitObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting && inside) {
+            inside = false;
+            this._runAnimation("scroll", "out");
+            if (!repeat) teardown();
+          }
+        });
+      }, { rootMargin: exitMargin, threshold: 0 });
+
+      enterObs.observe(this.el);
+      exitObs.observe(this.el);
+    };
+
+    build();
+    window.addEventListener("resize", build);
+    // destroyed() calls .disconnect() on every entry — route it through teardown so
+    // both observers and the resize listener are cleaned up.
+    this._observers.push({ disconnect: teardown });
   }
 };
 
