@@ -8,6 +8,8 @@ defmodule LiveAnimate do
   Animations run on the browser's Web Animations API (WAAPI) for GPU-accelerated
   performance, while the Elixir side stays purely declarative.
 
+  See it in action: [live demo](https://live-animate-demo.fly.dev).
+
   ## Setup
 
   Add the dependency, wire the JS hook into your LiveSocket, and import the CSS

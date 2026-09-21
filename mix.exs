@@ -1,8 +1,9 @@
 defmodule LiveAnimate.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.1"
   @source_url "https://github.com/lucaspaulii/live_animate"
+  @demo_url "https://live-animate-demo.fly.dev"
 
   def project do
     [
@@ -38,7 +39,7 @@ defmodule LiveAnimate.MixProject do
     [
       maintainers: ["Lucas Pauli"],
       licenses: ["MIT"],
-      links: %{"GitHub" => @source_url},
+      links: %{"GitHub" => @source_url, "Demo" => @demo_url},
       files:
         ~w(lib assets/js/live_animate.js assets/js/presets.js assets/css package.json mix.exs README.md LICENSE CHANGELOG.md)
     ]

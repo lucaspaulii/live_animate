@@ -2,6 +2,8 @@
 
 **Declarative UI animations for Phoenix LiveView — entrance/exit, gestures, springs, and page transitions, straight from HEEx with (almost) no JavaScript.**
 
+**[▶ Live demo](https://live-animate-demo.fly.dev)** · [Documentation](https://hexdocs.pm/live_animate) · [Hex](https://hex.pm/packages/live_animate)
+
 Add one `<.motion>` component to your HEEx and get entrance/exit animations, hover/tap/drag gestures, spring physics, scroll triggers, layout (FLIP) animations, and server-driven page transitions. Animations run on the browser's Web Animations API for GPU-accelerated performance; the Elixir side stays purely declarative.
 
 ```heex

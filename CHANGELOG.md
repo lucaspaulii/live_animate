@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.1
+
+### Fixed
+
+- **Scroll trigger infinite loop.** A `scroll` animation that moves the element
+  via `translate` (e.g. `slide-up`) could oscillate forever at a specific scroll
+  point: because `IntersectionObserver` measures the transformed box, playing the
+  "out" animation at the trigger edge shoved the element back across the boundary,
+  re-firing "in", then "out" again. The trigger now uses a Schmitt trigger — enter
+  on an inner band, exit only past a looser outer band, with a fixed hysteresis gap
+  wider than any preset's translate — so the animation's own motion can never
+  re-cross the opposite threshold.
+
 ## 0.1.0
 
 Initial release.
