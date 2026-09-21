@@ -3,7 +3,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/dev"
 import topbar from "../vendor/topbar"
-import LiveAnimate from "../../../assets/js/live_animate"
+import LiveAnimate from "live_animate"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const socketConfig = LiveAnimate.config({

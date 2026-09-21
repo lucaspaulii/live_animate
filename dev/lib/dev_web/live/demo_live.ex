@@ -9,6 +9,10 @@ defmodule DevWeb.AppWeb.DemoLive do
     %{id: 5, text: "Create the <.motion> component"}
   ]
 
+  @github_url "https://github.com/lucaspaulii/live_animate"
+  @maintainer "Lucas Pauli"
+  @maintainer_url "https://github.com/lucaspaulii"
+
   @colors ~w(bg-primary bg-secondary bg-accent bg-info bg-success bg-warning bg-error bg-primary bg-secondary bg-accent bg-info bg-success)
 
   @card_styles [
@@ -36,6 +40,9 @@ defmodule DevWeb.AppWeb.DemoLive do
     {:ok,
      socket
      |> assign(
+       github_url: @github_url,
+       maintainer: @maintainer,
+       maintainer_url: @maintainer_url,
        next_id: 6,
        show_flip: true,
        drag_pos: %{x: 0, y: 0},
@@ -130,12 +137,22 @@ defmodule DevWeb.AppWeb.DemoLive do
     ~H"""
     <div class="max-w-3xl mx-auto py-12 px-4 space-y-16">
       <%!-- Header --%>
-      <header id="demo-header" phx-update="ignore">
-        <h1 class="text-3xl font-bold mb-2">LiveAnimate Demo</h1>
-        <p class="text-base-content/60">
-          Every animation property in action. Click a preset in the
-          <strong>page-transition</strong> bar below to see <strong>View Transitions</strong>.
-        </p>
+      <header id="demo-header" phx-update="ignore" class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold mb-2">LiveAnimate Demo</h1>
+          <p class="text-base-content/60">
+            Every animation property in action. Click a preset in the
+            <strong>page-transition</strong> bar below to see <strong>View Transitions</strong>.
+          </p>
+        </div>
+        <a
+          href={@github_url}
+          target="_blank"
+          rel="noopener"
+          class="btn btn-sm btn-outline gap-2 shrink-0"
+        >
+          <.github_icon /> GitHub
+        </a>
       </header>
 
       <%!-- Page-transition showcase nav: click a preset to navigate with that transition --%>
@@ -703,8 +720,65 @@ defmodule DevWeb.AppWeb.DemoLive do
         </div>
       </.motion>
 
-      <div class="h-16"></div>
+      <.owner_card
+        maintainer={@maintainer}
+        maintainer_url={@maintainer_url}
+        github_url={@github_url}
+      />
     </div>
+    """
+  end
+
+  # ─── Owner / maintainer footer ───
+  # Small, self-contained section that credits the maintainer and links to the
+  # project. Kept as its own component so a donate button can slot into the
+  # `actions` area later without disturbing the demo layout.
+  attr :maintainer, :string, required: true
+  attr :maintainer_url, :string, required: true
+  attr :github_url, :string, required: true
+
+  defp owner_card(assigns) do
+    ~H"""
+    <footer class="border-t border-base-300 pt-8 mt-8">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
+            {String.first(@maintainer)}
+          </div>
+          <div class="leading-tight">
+            <p class="text-xs text-base-content/50">Maintained by</p>
+            <a
+              href={@maintainer_url}
+              target="_blank"
+              rel="noopener"
+              class="font-semibold hover:text-primary"
+            >
+              {@maintainer}
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%!-- Future: donate button slots in here --%>
+          <a
+            href={@github_url}
+            target="_blank"
+            rel="noopener"
+            class="btn btn-sm btn-outline gap-2"
+          >
+            <.github_icon /> Star on GitHub
+          </a>
+        </div>
+      </div>
+    </footer>
+    """
+  end
+
+  defp github_icon(assigns) do
+    ~H"""
+    <svg viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true">
+      <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.04-.02-2.05-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.96 0-1.32.47-2.39 1.24-3.23-.12-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.18.77.84 1.24 1.91 1.24 3.23 0 4.63-2.8 5.65-5.48 5.95.43.37.81 1.1.81 2.22 0 1.6-.01 2.9-.01 3.29 0 .32.22.7.83.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z" />
+    </svg>
     """
   end
 end

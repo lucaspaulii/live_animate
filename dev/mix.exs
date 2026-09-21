@@ -60,7 +60,11 @@ defmodule DevWeb.App.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:live_animate, path: ".."}
+      # Uses the published package so this demo is self-contained and deployable,
+      # and dogfoods the released library (proves the README's install steps).
+      # For local library development, swap to `{:live_animate, path: ".."}` and
+      # revert the app.js/app.css imports to the `../../../assets/...` paths.
+      {:live_animate, "~> 0.1.0"}
     ]
   end
 

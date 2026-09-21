@@ -110,6 +110,6 @@ html {
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* LiveAnimate exit animations and view transitions */
-@import "../../../assets/css/live_animate.css";
+@import "../../deps/live_animate/assets/css/live_animate.css";
 
 /* This file is for your main application CSS */

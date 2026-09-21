@@ -1,0 +1,25 @@
+# Fly.io config for the LiveAnimate demo.
+# Deploy: `fly apps create live-animate-demo` (once), set SECRET_KEY_BASE (see
+# README/notes), then `fly deploy`. Scales to zero when idle (near-zero cost),
+# cold-starts on the next request.
+app = "live-animate-demo"
+primary_region = "gru" # São Paulo — change to your nearest region (`fly platform regions`)
+
+[build]
+
+[env]
+  PHX_HOST = "live-animate-demo.fly.dev"
+  PORT = "8080"
+  PHX_SERVER = "true"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
