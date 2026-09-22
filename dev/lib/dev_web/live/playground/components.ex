@@ -69,6 +69,14 @@ defmodule DevWeb.AppWeb.Playground.Components do
             </div>
           </li>
         </ul>
+        <a
+          href="https://github.com/lucaspaulii/live_animate"
+          target="_blank"
+          rel="noopener"
+          class="flex items-center gap-2 mt-6 text-sm opacity-70 hover:opacity-100"
+        >
+          <.icon name="hero-code-bracket" class="size-4" /> GitHub
+        </a>
       </nav>
 
       <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">

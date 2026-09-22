@@ -64,7 +64,7 @@ defmodule DevWeb.App.MixProject do
       # and dogfoods the released library (proves the README's install steps).
       # For local library development, swap to `{:live_animate, path: ".."}` and
       # revert the app.js/app.css imports to the `../../../assets/...` paths.
-      {:live_animate, "~> 0.1.1"}
+      {:live_animate, "~> 0.1.2"}
     ]
   end
 

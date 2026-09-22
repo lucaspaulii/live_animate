@@ -145,14 +145,14 @@ defmodule DevWeb.AppWeb.DemoLive do
             <strong>page-transition</strong> bar below to see <strong>View Transitions</strong>.
           </p>
         </div>
-        <a
-          href={@github_url}
-          target="_blank"
-          rel="noopener"
-          class="btn btn-sm btn-outline gap-2 shrink-0"
-        >
-          <.github_icon /> GitHub
-        </a>
+        <div class="flex gap-2 shrink-0">
+          <.link navigate="/playground" class="btn btn-sm btn-outline gap-2">
+            <.icon name="hero-beaker" class="size-4" /> Playground
+          </.link>
+          <a href={@github_url} target="_blank" rel="noopener" class="btn btn-sm btn-outline gap-2">
+            <.github_icon /> GitHub
+          </a>
+        </div>
       </header>
 
       <%!-- Page-transition showcase nav: click a preset to navigate with that transition --%>
