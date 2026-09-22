@@ -921,10 +921,18 @@ const LiveAnimateHook = {
       // up/cancel (multitouch) is ignored so it can't cut the gesture short or
       // release a capture it never held.
       if (!isDragging || e.pointerId !== activePointerId) return;
-      this.el.releasePointerCapture(e.pointerId);
-      activePointerId = null;
+      // Clear state BEFORE releasing capture. releasePointerCapture fires
+      // `lostpointercapture` synchronously; the safety handler (below) re-enters
+      // onEnd only while a drag is active, so nulling these first makes our own
+      // release a no-op there (no recursion / double snap-back). The release is
+      // wrapped because capture may already be gone — an unexpected loss is
+      // exactly what routes us here via lostpointercapture.
       isDragging = false;
+      activePointerId = null;
       this.el.style.cursor = "grab";
+      try {
+        this.el.releasePointerCapture(e.pointerId);
+      } catch (_) {}
 
       const fromX = currentX;
       const fromY = currentY;
@@ -1025,6 +1033,16 @@ const LiveAnimateHook = {
     this._addListener(this.el, "pointermove", onMove);
     this._addListener(this.el, "pointerup", onEnd);
     this._addListener(this.el, "pointercancel", onEnd);
+
+    // Safety net: if capture is lost unexpectedly mid-drag (a LiveView
+    // re-render/reconnect re-attaching this node, or the browser interrupting the
+    // gesture), the pointerup that ends the drag never reaches us — leaving the
+    // element stuck to the cursor and never snapping back. End the drag as if
+    // released. Our own release nulls the drag state first, so this only acts on a
+    // genuine interruption.
+    this._addListener(this.el, "lostpointercapture", (e) => {
+      if (isDragging && e.pointerId === activePointerId) onEnd(e);
+    });
   },
 
   _setupScroll() {

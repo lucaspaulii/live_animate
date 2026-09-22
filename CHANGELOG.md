@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.2
+
+### Fixed
+
+- **Drag could get stuck when pointer capture was lost.** A drag holds the pointer
+  via `setPointerCapture`; if the browser released that capture mid-drag without a
+  `pointerup` reaching the element — e.g. the button was released outside the page
+  (over browser chrome/off-screen), the window lost focus, a native gesture took
+  over, or a LiveView re-render/reconnect re-attached the node — the drag never
+  ended: the element stayed stuck to the cursor and never snapped back. A
+  `lostpointercapture` handler now ends the drag (snap-back / settle) on any such
+  capture loss. Normal releases are unaffected (they clear drag state before
+  releasing capture, so the follow-on event is a no-op).
+
 ## 0.1.1
 
 ### Fixed

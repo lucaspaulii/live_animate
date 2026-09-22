@@ -1,7 +1,7 @@
 defmodule LiveAnimate.MixProject do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.1.2"
   @source_url "https://github.com/lucaspaulii/live_animate"
   @demo_url "https://live-animate-demo.fly.dev"
 
