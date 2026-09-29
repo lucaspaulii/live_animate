@@ -210,6 +210,12 @@ defmodule LiveAnimate do
   patches. Use `phx-drag-end` when the *server* needs to know where it landed —
   to persist it across a full page reload, or to drive other UI.
 
+  > #### Layout note {: .tip}
+  >
+  > Draggable or sliding elements that can travel past the viewport edge (e.g.
+  > swipe-to-dismiss) will expand the page's horizontal scroll. Either bound them
+  > with `constraints`, or clip overflow at the page level.
+
   ### Drag-end callback
 
   Set `phx-drag-end` on the element to receive the release position server-side.

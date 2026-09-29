@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.1.3
+
+### Fixed
+
+- **Drag conflicted with touch scrolling.** On touch devices a drag could fight
+  the browser's native scroll: a horizontal swipe would move a few pixels and
+  snap back "stuck", and a card that had been re-rendered stopped dragging
+  altogether. The gesture is now claimed on `pointerdown` and leaves scroll-vs-
+  drag arbitration to the `touch-action` CSS property (the browser's job), rather
+  than deferring the claim behind a movement threshold and re-deciding direction
+  in script — which let the browser latch a scroll it then tore away via
+  `pointercancel`. `touch-action` is also re-asserted after a LiveView re-render
+  (morphdom strips the inline style), so a patched element keeps arbitrating
+  correctly. The movement threshold now only gates when the drag becomes visible
+  and whether a release counts as a drag (so a tap on a draggable stays a tap).
+
+- **`in_view` with `repeat: true` could loop forever.** The same feedback trap
+  the `scroll` trigger fixed in 0.1.1: an `in_view` animation that moves the
+  element via `translate` (e.g. `slide-up`) oscillated in→out→in at a specific
+  scroll point, because `IntersectionObserver` measures the transformed box. The
+  repeat path now uses the same Schmitt trigger — enter on an inner band, exit
+  only past a hysteresis gap wider than any preset's translate. (`repeat: false`
+  was never affected: it plays once and stops observing.)
+
+### Documentation
+
+- README now covers **drag** and **page transitions** — the `use LiveAnimate` +
+  `@transition` API, the per-page timing map, and `apply_to` (navigate vs. also
+  patch) — with runnable examples.
+- Added a layout note to the drag docs: draggable/sliding elements that travel
+  past the viewport edge expand the page's horizontal scroll — bound them with
+  `constraints`, or clip overflow at the page level.
+
 ## 0.1.2
 
 ### Fixed

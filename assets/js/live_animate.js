@@ -456,6 +456,12 @@ const LiveAnimateHook = {
     if (this._dragOffset && (this._dragOffset.x || this._dragOffset.y)) {
       this.el.style.translate = `${this._dragOffset.x}px ${this._dragOffset.y}px`;
     }
+
+    // Re-assert the drag's touch-action. It's set once in `_setupDrag` as an
+    // inline style, but morphdom strips inline styles absent from the server's
+    // node on every re-render — and a draggable that loses its touch-action lets
+    // the browser steal the gesture for a scroll (drag "flicks and snaps back").
+    if (this._dragTouchAction) this.el.style.touchAction = this._dragTouchAction;
   },
 
   // No `reconnected()` handler — deliberately. On a LiveView socket reconnect,
@@ -737,19 +743,56 @@ const LiveAnimateHook = {
     const staggerOpts = this._staggerDelay > 0
       ? { delay: (inViewConfig?.delay ?? 0) + this._staggerDelay }
       : {};
-    const observer = new IntersectionObserver((entries) => {
+
+    // repeat:false — play "in" once on first entry, then stop observing. There is
+    // no "out", so the animation's own motion can never re-trigger anything.
+    if (!repeat) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            this._runAnimation("in_view", "in", staggerOpts);
+            observer.unobserve(this.el);
+          }
+        });
+      }, { threshold: amount || 0.1 });
+      observer.observe(this.el);
+      this._observers.push(observer);
+      return;
+    }
+
+    // repeat:true — replay on every entry/exit. Same FEEDBACK-LOOP TRAP as
+    // _setupScroll: the "in" animation moves the element via `translate`
+    // (slide-up ≈30px) and IntersectionObserver measures the *transformed* box,
+    // so a single boundary oscillates in→out→in→… forever when the element is
+    // parked at it. Cure it with the same Schmitt trigger: enter when `amount`
+    // of the element is visible, but exit only once it has travelled HYSTERESIS
+    // px BEYOND the viewport edge (a positive rootMargin extends the root, so the
+    // element keeps "intersecting" the exit observer until it is well clear).
+    // The gap is wider than any preset translate, so the animation's own motion
+    // can never carry the box across the opposite threshold. Both bands are
+    // viewport-independent (threshold fraction / fixed px), so no resize rebuild.
+    const HYSTERESIS = 60;
+    let inside = false;
+    const enterObs = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !inside) {
+          inside = true;
           this._runAnimation("in_view", "in", staggerOpts);
-          if (!repeat) observer.unobserve(this.el);
-        } else if (repeat) {
-          this._runAnimation("in_view", "out");
         }
       });
     }, { threshold: amount || 0.1 });
+    const exitObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting && inside) {
+          inside = false;
+          this._runAnimation("in_view", "out");
+        }
+      });
+    }, { rootMargin: `${HYSTERESIS}px 0px ${HYSTERESIS}px 0px`, threshold: 0 });
 
-    observer.observe(this.el);
-    this._observers.push(observer);
+    enterObs.observe(this.el);
+    exitObs.observe(this.el);
+    this._observers.push(enterObs, exitObs);
   },
 
   _setupDrag() {
@@ -758,9 +801,18 @@ const LiveAnimateHook = {
     const constraints = dragConfig.constraints || null; // { top, bottom, left, right }
     const elastic = dragConfig.elastic ?? 0.35; // 0 = hard clamp, 1 = fully elastic
     const snapBack = dragConfig.snap_back ?? true; // false = stay where dropped
+    // px of movement before the drag becomes *visible*. Mirrors Motion's 3px
+    // pan threshold: it gates when the element starts translating and whether a
+    // release counts as a drag (snap-back + phx-drag-end), NOT whether we claim
+    // the pointer. Scroll-vs-drag arbitration is the browser's job via
+    // `touch-action` (set below) — we never try to re-decide it in JS.
+    const DRAG_THRESHOLD = 5;
 
-    let isDragging = false;
+    let isDragging = false; // pointer claimed; a gesture session is active
+    let moved = false; // session has passed DRAG_THRESHOLD → a real drag
     let activePointerId = null; // the one pointer that owns the active drag
+    let pressClientX = 0; // raw pointer position at pointerdown (for threshold)
+    let pressClientY = 0;
     let startX, startY;
     let currentX = 0;
     let currentY = 0;
@@ -796,7 +848,15 @@ const LiveAnimateHook = {
     this.el.style.cursor = "grab";
     this.el.style.userSelect = "none";
     this.el.style.webkitUserSelect = "none";
-    this.el.style.touchAction = axis === "x" ? "pan-y" : axis === "y" ? "pan-x" : "none";
+    // touch-action is the ONLY lever that decides scroll-vs-drag on touch —
+    // Pointer Events ignore preventDefault for scrolling. pan-y = "vertical
+    // scroll is the browser's, horizontal is mine" (x-drag); pan-x = the reverse
+    // (y-drag); none = "no native scroll on me" (free drag). Stashed so
+    // `updated()` can re-assert it: a server re-render strips inline styles
+    // (morphdom), and a card that lost its touch-action lets the browser steal
+    // every horizontal swipe again.
+    this._dragTouchAction = axis === "x" ? "pan-y" : axis === "y" ? "pan-x" : "none";
+    this.el.style.touchAction = this._dragTouchAction;
 
     // Cancel only animations that hold the `translate` channel — a running
     // animation wins over inline styles in the cascade, so any translate
@@ -810,7 +870,12 @@ const LiveAnimateHook = {
       });
     };
 
-    const beginDrag = (e) => {
+    // originX/originY: the client point the drag is measured from — the press
+    // point at pointerdown (or the current finger position when auto-resuming a
+    // drag whose node LiveView replaced mid-gesture). The element tracks the
+    // finger 1:1 from here; the DRAG_THRESHOLD is absorbed as a one-off ~5px
+    // catch-up when the drag first becomes visible, exactly like Motion's 3px.
+    const beginDrag = (e, originX = e.clientX, originY = e.clientY) => {
       // One drag at a time. Without this, an overlapping pointerdown (e.g. a
       // second finger on touch) runs beginDrag again and captures the ALREADY-
       // dragging inline styles as `prevPosition`/`prevZIndex` — which then get
@@ -835,16 +900,18 @@ const LiveAnimateHook = {
       this.el.setPointerCapture(e.pointerId);
       activePointerId = e.pointerId;
       isDragging = true;
+      moved = false; // not a visible drag until movement passes DRAG_THRESHOLD
+      pressClientX = originX;
+      pressClientY = originY;
       prevPosition = this.el.style.position;
       prevZIndex = this.el.style.zIndex;
       this.el.style.position = "relative";
-      this.el.style.cursor = "grabbing";
       this.el.style.zIndex = "9999";
 
       cancelTranslateAnims();
 
-      startX = e.clientX - currentX;
-      startY = e.clientY - currentY;
+      startX = originX - currentX;
+      startY = originY - currentY;
 
       // Seed velocity tracking so the first move computes a sane dt.
       velX = 0;
@@ -861,6 +928,7 @@ const LiveAnimateHook = {
         // held down, resume the drag on this new node.
         if (e.buttons === 1 && performance.now() - mountedAt < 500) {
           beginDrag(e);
+          moved = true; // the pre-remount gesture was already a real drag
         } else {
           return;
         }
@@ -868,6 +936,17 @@ const LiveAnimateHook = {
       // Ignore other pointers while a drag is in progress (multitouch): only the
       // pointer that started the drag drives it.
       if (e.pointerId !== activePointerId) return;
+
+      // Threshold gate: the pointer is claimed, but hold off on translating (and
+      // on counting this as a drag) until the finger travels DRAG_THRESHOLD from
+      // the press point. This is the ONLY thing the threshold does — it never
+      // hands the gesture back to the browser (touch-action already arbitrated
+      // scroll-vs-drag). Below threshold a release is treated as a tap.
+      if (!moved) {
+        if (Math.hypot(e.clientX - pressClientX, e.clientY - pressClientY) < DRAG_THRESHOLD) return;
+        moved = true;
+        this.el.style.cursor = "grabbing";
+      }
       e.preventDefault();
 
       // Kill any translate animations that appeared after drag started (e.g.
@@ -911,8 +990,33 @@ const LiveAnimateHook = {
     };
 
     const onStart = (e) => {
-      if (e.button !== 0) return; // only primary button
-      e.preventDefault();
+      if (e.button !== 0) return; // only primary button / primary touch contact
+
+      // Wedge recovery: a drag flagged active but with no pointer events for a
+      // while is almost certainly wedged — on some touch engines the browser
+      // steals the pointer for a scroll and delivers NO terminating
+      // pointercancel/pointerup, leaving isDragging stuck true (which would make
+      // beginDrag's `if (isDragging) return` reject every future drag). A quiet
+      // gap since the last move means the prior gesture is really over: clear it
+      // so this fresh pointerdown can drag. A genuinely live drag (recent moves)
+      // is left alone — this pointerdown is then a 2nd finger, which beginDrag
+      // ignores. currentX/currentY are kept so a re-grab continues in place.
+      if (isDragging && performance.now() - lastMoveT > 400) {
+        this.el.style.position = prevPosition;
+        this.el.style.zIndex = prevZIndex;
+        this.el.style.cursor = "grab";
+        isDragging = false;
+        activePointerId = null;
+      }
+
+      // Claim the pointer immediately (Motion-aligned): capture on pointerdown so
+      // every move + the terminating event route here, and so the browser can't
+      // spend the first unclaimed moves latching a scroll it then rips away via
+      // pointercancel. Whether a touch scroll is even allowed was already decided
+      // by `touch-action` — capturing does not override it, so perpendicular
+      // scroll still works and cross-axis gestures still pointercancel cleanly.
+      // No preventDefault here: it can't affect scrolling and would suppress
+      // focus/click semantics. beginDrag no-ops if a live drag already owns us.
       beginDrag(e);
     };
 
@@ -933,6 +1037,15 @@ const LiveAnimateHook = {
       try {
         this.el.releasePointerCapture(e.pointerId);
       } catch (_) {}
+
+      // Never crossed the threshold → this was a tap (or a gesture the browser
+      // took for scrolling), not a drag. Restore the pre-drag box and leave
+      // without snapping or firing phx-drag-end, so a tap stays a plain tap.
+      if (!moved) {
+        this.el.style.zIndex = prevZIndex;
+        this.el.style.position = prevPosition;
+        return;
+      }
 
       const fromX = currentX;
       const fromY = currentY;
@@ -1027,12 +1140,17 @@ const LiveAnimateHook = {
     // pointercancel and kills our gesture mid-drag.
     this._addListener(this.el, "dragstart", (e) => e.preventDefault());
 
-    // Pointer events + capture: all events route to el during drag,
-    // preventing native text-drag from stealing the gesture.
+    // pointerdown/move stay on el: down opens the intent gate, and once a drag
+    // commits, pointer capture routes moves to el anyway.
     this._addListener(this.el, "pointerdown", onStart);
     this._addListener(this.el, "pointermove", onMove);
-    this._addListener(this.el, "pointerup", onEnd);
-    this._addListener(this.el, "pointercancel", onEnd);
+    // End listeners live on WINDOW, not el. When a touch scroll steals the
+    // pointer the browser fires pointercancel — but under capture that terminating
+    // event doesn't always reach el's own handler. A window listener always sees
+    // it, so the drag recovers (snaps back) immediately instead of hanging until
+    // the next touch. Each fires onEnd, which no-ops for pointers it doesn't own.
+    this._addListener(window, "pointerup", onEnd);
+    this._addListener(window, "pointercancel", onEnd);
 
     // Safety net: if capture is lost unexpectedly mid-drag (a LiveView
     // re-render/reconnect re-attaching this node, or the browser interrupting the

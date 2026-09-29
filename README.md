@@ -88,7 +88,28 @@ end
 <.motion id="toast" animate="slide-left" exit="fade">
   <p>Dismissible toast</p>
 </.motion>
+
+<%# Drag — axis-locked, snap-back, release position pushed to the server %>
+<.motion id="card" drag={%{axis: "x"}} phx-drag-end="card_released">
+  <div>Drag me</div>
+</.motion>
 ```
+
+## Page transitions
+
+Animate the *whole page* across LiveView navigation. Unlike the examples above, this isn't a `<.motion>` attribute — add `use LiveAnimate` to a LiveView (after `use ..., :live_view`) and declare a `@transition`:
+
+```elixir
+defmodule MyAppWeb.PageLive do
+  use MyAppWeb, :live_view
+  use LiveAnimate
+  @transition "slide-left"
+
+  # ...
+end
+```
+
+`@transition` also accepts a map for per-page timing — `@transition %{preset: "slide-left", duration: 300, easing: "ease-out"}`. By default it runs only on navigation (`live_navigate`/`live_redirect`); add `apply_to: :all` to also transition same-LiveView `live_patch` updates. See the [documentation](https://hexdocs.pm/live_animate) for `apply_to` and shared-element morphing. Falls back to an instant swap where the [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) isn't available.
 
 ## Available presets
 
