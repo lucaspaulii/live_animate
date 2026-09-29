@@ -193,8 +193,6 @@ defmodule DevWeb.AppWeb.Playground.LifecycleLive do
           </div>
         </.stage>
 
-        <.study_card study={@leak_study} />
-
         <%!-- Exit-race harness --%>
         <.stage title={"Exit-race harness — #{length(@exit_items)} item(s)"} align="start">
           <div class="w-full h-56 overflow-y-auto">
@@ -222,8 +220,6 @@ defmodule DevWeb.AppWeb.Playground.LifecycleLive do
             </div>
           </div>
         </.stage>
-
-        <.study_card study={@exit_study} />
       </:stage>
 
       <:controls>

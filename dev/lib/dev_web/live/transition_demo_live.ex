@@ -49,9 +49,9 @@ defmodule DevWeb.AppWeb.TransitionDemo do
   @doc "The `@transition ...` source line that would produce the current preset/timing/scope."
   def source_for(preset, duration, easing, scope) do
     parts =
-      (if duration, do: ["duration: #{duration}"], else: []) ++
-        (if easing, do: ["easing: #{inspect(easing)}"], else: []) ++
-        (if scope == :all, do: ["apply_to: :all"], else: [])
+      if(duration, do: ["duration: #{duration}"], else: []) ++
+        if(easing, do: ["easing: #{inspect(easing)}"], else: []) ++
+        if scope == :all, do: ["apply_to: :all"], else: []
 
     if parts == [] do
       ~s|@transition "#{preset}"|
@@ -66,22 +66,35 @@ defmodule DevWeb.AppWeb.TransitionDemo do
     assigns = assign(assigns, :presets, presets())
 
     ~H"""
-    <nav class="flex flex-wrap items-center gap-1.5 rounded-box border border-base-300 bg-base-200/50 p-2">
-      <span class="px-2 text-xs font-semibold uppercase tracking-wide opacity-60">
+    <nav class="flex flex-wrap items-center justify-center gap-1 rounded-3xl border border-base-300/70 bg-base-200/50 p-1.5 sm:justify-start sm:rounded-full">
+      <span class="px-3 text-xs font-medium text-base-content/40">
         Page transition
       </span>
       <.link
         :for={p <- @presets}
         navigate={"/transitions/#{p}"}
-        class={["btn btn-xs", if(p == @current, do: "btn-primary", else: "btn-ghost")]}
+        class={[
+          "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+          if(p == @current,
+            do: "bg-base-100 text-base-content shadow-sm",
+            else: "text-base-content/60 hover:text-base-content"
+          )
+        ]}
       >
         {p}
       </.link>
-      <.link :if={@current} navigate="/" class="btn btn-xs btn-ghost ml-auto gap-1">
-        <.icon name="hero-arrow-left" class="size-3" /> Back to demo
-      </.link>
     </nav>
     """
+  end
+
+  # iOS-style segmented-control pill: light raised pill when selected, quiet text
+  # when not. Shared by the `apply_to` and panel toggles below.
+  defp seg(selected?) do
+    base = "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors"
+
+    if selected?,
+      do: "#{base} bg-base-100 text-base-content shadow-sm",
+      else: "#{base} text-base-content/60 hover:text-base-content"
   end
 
   @descriptions %{
@@ -101,79 +114,89 @@ defmodule DevWeb.AppWeb.TransitionDemo do
       )
 
     ~H"""
-    <div class="space-y-6">
+    <div class="mx-auto max-w-2xl space-y-6 px-5 py-16 sm:py-24">
+      <.link
+        navigate="/"
+        class="inline-flex items-center gap-1.5 text-sm font-medium text-base-content/50 hover:text-base-content"
+      >
+        <.icon name="hero-arrow-left" class="size-4" /> Back to demo
+      </.link>
+
       <.transition_nav current={@current} />
 
-      <div class="rounded-box border border-base-300 bg-base-100 p-10 text-center shadow-sm">
-        <div class="text-xs font-semibold uppercase tracking-wide opacity-50">
-          You navigated here with
-        </div>
-        <div class="mt-2 font-mono text-4xl font-bold text-primary">
-          {@current}
-        </div>
-        <p class="mx-auto mt-4 max-w-md text-sm opacity-70">
+      <div class="rounded-3xl border border-base-300/70 bg-base-200/50 p-8 text-center sm:p-12">
+        <p class="text-xs font-medium text-base-content/40">You navigated here with</p>
+        <h1 class="mt-2 text-5xl font-semibold tracking-tight sm:text-6xl">{@current}</h1>
+        <p class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-base-content/60">
           {@description}
         </p>
 
-        <div class="mx-auto mt-6 max-w-md">
-          <p class="mb-2 text-xs opacity-50">
-            Declared on this LiveView as:
+        <div class="mx-auto mt-8 max-w-md text-left">
+          <p class="mb-2 px-1 text-xs font-medium text-base-content/40">
+            Declared on this LiveView as
           </p>
-          <pre class="overflow-x-auto rounded-box bg-base-200 p-3 text-left text-xs"><code>use LiveAnimate
+          <pre class="overflow-x-auto rounded-2xl border border-base-300/70 bg-base-100 p-4 text-left font-mono text-xs leading-relaxed text-base-content/80 shadow-sm"><code>use LiveAnimate
     {@source}</code></pre>
         </div>
 
-        <div class="mx-auto mt-6 max-w-md rounded-box border border-base-300 bg-base-200/40 p-4">
-          <p class="mb-1 text-xs font-semibold uppercase tracking-wide opacity-60">
-            apply_to
-          </p>
-          <div class="flex justify-center gap-1.5">
-            <button
-              type="button"
-              phx-click="set_scope"
-              phx-value-scope="navigate"
-              class={["btn btn-xs", if(@scope == :navigate, do: "btn-primary", else: "btn-ghost")]}
-            >
-              :navigate
-            </button>
-            <button
-              type="button"
-              phx-click="set_scope"
-              phx-value-scope="all"
-              class={["btn btn-xs", if(@scope == :all, do: "btn-primary", else: "btn-ghost")]}
-            >
-              :all
-            </button>
+        <div class="mx-auto mt-6 max-w-md rounded-2xl border border-base-300/70 bg-base-100 p-5 text-left shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <span class="font-mono text-sm font-medium text-base-content">apply_to</span>
+            <div class="inline-flex rounded-full bg-base-200 p-1">
+              <button
+                type="button"
+                phx-click="set_scope"
+                phx-value-scope="navigate"
+                class={seg(@scope == :navigate)}
+              >
+                :navigate
+              </button>
+              <button
+                type="button"
+                phx-click="set_scope"
+                phx-value-scope="all"
+                class={seg(@scope == :all)}
+              >
+                :all
+              </button>
+            </div>
           </div>
 
-          <p class="mt-4 mb-2 text-xs opacity-60">
-            Now click a panel — same LiveView, a <code>live_patch</code> (no navigation):
+          <p class="mt-5 text-sm leading-relaxed text-base-content/60">
+            Now click a panel — same LiveView, a
+            <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs">live_patch</code>
+            (no navigation):
           </p>
-          <div class="flex justify-center gap-1.5">
+          <div class="mt-3 inline-flex rounded-full bg-base-200 p-1">
             <.link
               :for={n <- ["1", "2", "3"]}
               patch={"/transitions/#{@current}?panel=#{n}"}
-              class={["btn btn-xs", if(n == @panel, do: "btn-primary", else: "btn-ghost")]}
+              class={seg(n == @panel)}
             >
               Panel {n}
             </.link>
           </div>
-          <p class="mt-3 text-xs opacity-70">
-            Showing panel <span class="font-mono font-bold text-primary">{@panel}</span> —
+          <p class="mt-4 text-sm leading-relaxed text-base-content/60">
+            Showing panel <span class="font-semibold text-base-content">{@panel}</span>
+            —
             <%= if @scope == :all do %>
-              the patch <strong>animates</strong> with this transition
-              (<code class="rounded bg-base-300 px-1">apply_to: :all</code>).
+              the patch <strong class="font-semibold text-base-content">animates</strong>
+              with this transition
+              (<code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs">apply_to: :all</code>).
             <% else %>
-              the patch updates <strong>instantly</strong>
-              (<code class="rounded bg-base-300 px-1">apply_to: :navigate</code>, the default) —
-              flip the toggle to see it animate.
+              the patch updates <strong class="font-semibold text-base-content">instantly</strong>
+              (<code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs">apply_to: :navigate</code>,
+              the default) — flip the toggle to see it animate.
             <% end %>
           </p>
         </div>
 
-        <p class="mx-auto mt-6 max-w-md text-xs opacity-50">
-          Top nav = <code>live_navigate</code> (always transitions). Submenu =
-          <code>live_patch</code> (transitions only with <code>apply_to: :all</code>).
+        <p class="mx-auto mt-8 max-w-md text-xs leading-relaxed text-base-content/40">
+          Top nav =
+          <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-[0.7rem]">live_navigate</code>
+          (always transitions). Submenu =
+          <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-[0.7rem]">live_patch</code>
+          (transitions only with <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-[0.7rem]">apply_to: :all</code>).
         </p>
       </div>
     </div>
@@ -189,7 +212,9 @@ for spec <- DevWeb.AppWeb.TransitionDemo.specs() do
   preset = DevWeb.AppWeb.TransitionDemo.preset_of(spec)
   duration = DevWeb.AppWeb.TransitionDemo.duration_of(spec)
   easing = DevWeb.AppWeb.TransitionDemo.easing_of(spec)
-  name = Module.concat(DevWeb.AppWeb.TransitionDemo, Macro.camelize(String.replace(preset, "-", "_")))
+
+  name =
+    Module.concat(DevWeb.AppWeb.TransitionDemo, Macro.camelize(String.replace(preset, "-", "_")))
 
   body =
     quote do

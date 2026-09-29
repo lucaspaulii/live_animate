@@ -60,7 +60,7 @@ defmodule DevWeb.AppWeb.PlaygroundLive do
             id={"pg-stage-#{@replay_key}"}
             animate={animate_config(assigns)}
             delay={@delay}
-            class="rounded-box bg-primary text-primary-content px-8 py-6 shadow-lg font-medium"
+            class="rounded-2xl bg-primary text-primary-content px-8 py-6 shadow-lg font-medium"
           >
             {@preset}
           </.motion>
@@ -71,7 +71,7 @@ defmodule DevWeb.AppWeb.PlaygroundLive do
 
       <:controls>
         <form phx-change="update_controls" class="space-y-4">
-          <div class="rounded-box border border-base-300 p-4 space-y-4">
+          <div class="rounded-2xl border border-base-300/70 bg-base-100 p-5 space-y-4 shadow-sm">
             <.select_control label="Preset" name="preset" value={@preset} options={@presets} />
             <.segmented
               label="Transition"

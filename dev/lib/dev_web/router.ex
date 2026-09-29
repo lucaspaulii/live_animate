@@ -31,7 +31,6 @@ defmodule DevWeb.AppWeb.Router do
     live "/playground/transitions", Playground.TransitionsLive
     live "/playground/gestures", Playground.GesturesLive
     live "/playground/layout", Playground.LayoutLive
-    live "/playground/lifecycle", Playground.LifecycleLive
     live "/playground/streams", Playground.StreamsLive
   end
 

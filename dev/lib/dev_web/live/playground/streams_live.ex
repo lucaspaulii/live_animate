@@ -9,7 +9,6 @@ defmodule DevWeb.AppWeb.Playground.StreamsLive do
   use DevWeb.AppWeb, :live_view
 
   import DevWeb.AppWeb.Playground.Components
-  alias DevWeb.AppWeb.Playground.Studies
 
   @colors ~w(bg-primary bg-secondary bg-accent bg-info bg-success bg-warning bg-error)
 
@@ -21,7 +20,6 @@ defmodule DevWeb.AppWeb.Playground.StreamsLive do
      socket
      |> assign(
        page_title: "Streams",
-       study: Studies.get(:stream_lifecycle),
        next_id: 6,
        # Streams don't retain a server-side list; we track live ids so we can
        # pick a random one to delete and count what's on screen.
@@ -126,8 +124,6 @@ defmodule DevWeb.AppWeb.Playground.StreamsLive do
             </.motion>
           </div>
         </.stage>
-
-        <.study_card study={@study} />
       </:stage>
 
       <:controls>

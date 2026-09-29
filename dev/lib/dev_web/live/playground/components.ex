@@ -16,7 +16,6 @@ defmodule DevWeb.AppWeb.Playground.Components do
     %{path: "/playground/transitions", label: "Transitions", icon: "hero-adjustments-horizontal", built?: true},
     %{path: "/playground/gestures", label: "Gestures", icon: "hero-cursor-arrow-rays", built?: true},
     %{path: "/playground/layout", label: "Layout / FLIP", icon: "hero-squares-2x2", built?: true},
-    %{path: "/playground/lifecycle", label: "Lifecycle harness", icon: "hero-bug-ant", built?: true},
     %{path: "/playground/streams", label: "Streams", icon: "hero-queue-list", built?: true},
     %{path: "/playground/navigation", label: "Navigation", icon: "hero-arrows-right-left", built?: false}
   ]
@@ -37,21 +36,24 @@ defmodule DevWeb.AppWeb.Playground.Components do
 
     ~H"""
     <div class="min-h-screen flex flex-col lg:flex-row">
-      <nav class="lg:w-56 shrink-0 border-b lg:border-b-0 lg:border-r border-base-300 p-4">
-        <a href="/" class="flex items-center gap-2 mb-6 text-sm opacity-70 hover:opacity-100">
+      <nav class="lg:w-60 shrink-0 border-b lg:border-b-0 lg:border-r border-base-300/70 p-5 lg:p-6">
+        <a
+          href="/"
+          class="flex items-center gap-1.5 mb-8 text-sm font-medium text-base-content/50 hover:text-base-content"
+        >
           <.icon name="hero-arrow-left" class="size-4" /> Back to demo
         </a>
-        <div class="text-xs font-semibold uppercase tracking-wide opacity-50 mb-2">Playground</div>
+        <div class="text-xs font-medium text-base-content/40 mb-3 px-1">Playground</div>
         <ul class="flex lg:flex-col gap-1 flex-wrap">
           <li :for={s <- @sections}>
             <.link
               :if={s.built?}
               navigate={s.path}
               class={[
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+                "flex items-center gap-2.5 rounded-full px-3.5 py-2 text-sm transition-colors",
                 if(@active == s.path,
-                  do: "bg-primary/15 text-primary font-medium",
-                  else: "hover:bg-base-200"
+                  do: "bg-base-100 text-base-content font-medium shadow-sm",
+                  else: "text-base-content/60 hover:text-base-content hover:bg-base-200/60"
                 )
               ]}
             >
@@ -60,12 +62,14 @@ defmodule DevWeb.AppWeb.Playground.Components do
             </.link>
             <div
               :if={!s.built?}
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm opacity-40 cursor-not-allowed"
+              class="flex items-center gap-2.5 rounded-full px-3.5 py-2 text-sm text-base-content/30 cursor-not-allowed"
               title="Coming in a later build step"
             >
               <.icon name={s.icon} class="size-4 shrink-0" />
               <span>{s.label}</span>
-              <span class="ml-auto text-[10px] uppercase tracking-wide badge badge-ghost badge-sm">soon</span>
+              <span class="ml-auto rounded-full bg-base-200 px-2 py-0.5 text-[10px] font-medium text-base-content/50">
+                soon
+              </span>
             </div>
           </li>
         </ul>
@@ -73,16 +77,16 @@ defmodule DevWeb.AppWeb.Playground.Components do
           href="https://github.com/lucaspaulii/live_animate"
           target="_blank"
           rel="noopener"
-          class="flex items-center gap-2 mt-6 text-sm opacity-70 hover:opacity-100"
+          class="flex items-center gap-1.5 mt-8 px-1 text-sm font-medium text-base-content/50 hover:text-base-content"
         >
           <.icon name="hero-code-bracket" class="size-4" /> GitHub
         </a>
       </nav>
 
-      <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
-        <header class="mb-6">
-          <h1 class="text-2xl font-bold">{@title}</h1>
-          <p :if={@subtitle} class="text-base-content/60 mt-1">{@subtitle}</p>
+      <main class="flex-1 min-w-0 p-5 sm:p-8 lg:p-12">
+        <header class="mb-8">
+          <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">{@title}</h1>
+          <p :if={@subtitle} class="text-base-content/60 mt-2 leading-relaxed">{@subtitle}</p>
         </header>
 
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_20rem] gap-6 items-start">
@@ -116,11 +120,11 @@ defmodule DevWeb.AppWeb.Playground.Components do
   def stage(assigns) do
     ~H"""
     <section class={[
-      "rounded-box border border-base-300 bg-base-200/40 overflow-hidden",
+      "rounded-3xl border border-base-300/70 bg-base-200/50 overflow-hidden",
       @class
     ]}>
-      <div class="flex items-center justify-between px-4 py-2 border-b border-base-300 bg-base-200/60">
-        <span class="text-xs font-medium uppercase tracking-wide opacity-60">{@title}</span>
+      <div class="flex items-center justify-between px-5 py-3 border-b border-base-300/60">
+        <span class="text-xs font-medium text-base-content/40">{@title}</span>
       </div>
       <div
         class={[
@@ -144,20 +148,20 @@ defmodule DevWeb.AppWeb.Playground.Components do
   """
   def code_panel(assigns) do
     ~H"""
-    <section class="rounded-box border border-base-300 overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-2 border-b border-base-300 bg-base-200/60">
-        <span class="text-xs font-medium uppercase tracking-wide opacity-60">{@title}</span>
+    <section class="rounded-3xl border border-base-300/70 bg-base-200/50 overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-base-300/60">
+        <span class="text-xs font-medium text-base-content/40">{@title}</span>
         <button
           type="button"
           phx-hook=".Copy"
           id="code-copy-btn"
           data-copy={@code}
-          class="btn btn-xs btn-ghost gap-1"
+          class="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-base-content/60 hover:bg-base-200/60 hover:text-base-content"
         >
-          <.icon name="hero-clipboard-document" class="size-3.5" /> Copy
+          <.icon name="hero-clipboard-document" class="size-3.5" /> <span>Copy</span>
         </button>
       </div>
-      <pre class="overflow-x-auto p-4 text-sm leading-relaxed bg-base-300/30"><code>{@code}</code></pre>
+      <pre class="overflow-x-auto p-5 font-mono text-sm leading-relaxed text-base-content/80"><code>{@code}</code></pre>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".Copy">
         export default {
           mounted() {
@@ -192,9 +196,9 @@ defmodule DevWeb.AppWeb.Playground.Components do
   def slider(assigns) do
     ~H"""
     <label class="block">
-      <div class="flex justify-between text-sm mb-1">
-        <span class="opacity-70">{@label}</span>
-        <span class="font-mono tabular-nums">{@value}{@unit}</span>
+      <div class="flex justify-between text-sm mb-1.5">
+        <span class="text-base-content/60">{@label}</span>
+        <span class="font-mono tabular-nums font-medium text-base-content">{@value}{@unit}</span>
       </div>
       <input
         type="range"
@@ -218,8 +222,8 @@ defmodule DevWeb.AppWeb.Playground.Components do
   def select_control(assigns) do
     ~H"""
     <label class="block">
-      <div class="text-sm opacity-70 mb-1">{@label}</div>
-      <select name={@name} class="select select-sm select-bordered w-full">
+      <div class="text-sm text-base-content/60 mb-1.5">{@label}</div>
+      <select name={@name} class="select select-sm select-bordered w-full rounded-full">
         <option :for={opt <- @options} value={opt_value(opt)} selected={opt_value(opt) == to_string(@value)}>
           {opt_label(opt)}
         </option>
@@ -237,13 +241,16 @@ defmodule DevWeb.AppWeb.Playground.Components do
   def segmented(assigns) do
     ~H"""
     <div>
-      <div class="text-sm opacity-70 mb-1">{@label}</div>
-      <div class="join w-full">
+      <div class="text-sm text-base-content/60 mb-1.5">{@label}</div>
+      <div class="flex w-full rounded-full bg-base-200 p-1">
         <label
           :for={opt <- @options}
           class={[
-            "btn btn-sm join-item flex-1 font-normal",
-            if(opt_value(opt) == to_string(@value), do: "btn-primary", else: "btn-ghost bg-base-200")
+            "flex-1 cursor-pointer rounded-full px-3 py-1.5 text-center text-sm font-medium transition-colors",
+            if(opt_value(opt) == to_string(@value),
+              do: "bg-base-100 text-base-content shadow-sm",
+              else: "text-base-content/60 hover:text-base-content"
+            )
           ]}
         >
           <input
@@ -257,48 +264,6 @@ defmodule DevWeb.AppWeb.Playground.Components do
         </label>
       </div>
     </div>
-    """
-  end
-
-  attr :study, :map, required: true, doc: "a map from DevWeb.AppWeb.Playground.Studies"
-
-  @doc "Renders an edge-case study card: what it is, why risky, how to trigger, expected vs failure."
-  def study_card(assigns) do
-    ~H"""
-    <section class="rounded-box border border-warning/40 bg-warning/5 overflow-hidden">
-      <div class="flex items-center gap-2 px-4 py-2 border-b border-warning/30 bg-warning/10">
-        <.icon name="hero-bug-ant" class="size-4 text-warning" />
-        <span class="text-sm font-semibold">{@study.title}</span>
-      </div>
-      <dl class="p-4 grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-        <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide opacity-50">What</dt>
-          <dd class="mt-0.5 opacity-80">{@study.what}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide opacity-50">Why risky</dt>
-          <dd class="mt-0.5 opacity-80">{@study.why_risky}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide opacity-50">How to trigger</dt>
-          <dd class="mt-0.5 opacity-80">{@study.how_to_trigger}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-success/70">Expected</dt>
-          <dd class="mt-0.5 opacity-80">{@study.expected}</dd>
-        </div>
-        <div class="sm:col-span-2">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-error/70">Failure looks like</dt>
-          <dd class="mt-0.5 opacity-80">{@study.failure}</dd>
-        </div>
-        <div :if={@study[:code_refs]} class="sm:col-span-2">
-          <dt class="text-xs font-semibold uppercase tracking-wide opacity-50">Code</dt>
-          <dd class="mt-0.5 flex flex-wrap gap-2">
-            <code :for={ref <- @study.code_refs} class="text-xs bg-base-300/50 rounded px-1.5 py-0.5">{ref}</code>
-          </dd>
-        </div>
-      </dl>
-    </section>
     """
   end
 
