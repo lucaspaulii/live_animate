@@ -64,7 +64,7 @@ defmodule DevWeb.AppWeb.DemoLive do
        maintainer: @maintainer,
        maintainer_url: @maintainer_url,
        next_id: 6,
-       show_flip: true,
+       show_entrance: true,
        drag_pos: %{x: 0, y: 0},
        slider_x: 0,
        swipe_cards: [
@@ -98,8 +98,8 @@ defmodule DevWeb.AppWeb.DemoLive do
     {:noreply, stream_delete_by_dom_id(socket, :items, "items-#{id}")}
   end
 
-  def handle_event("toggle_flip", _params, socket) do
-    {:noreply, assign(socket, show_flip: !socket.assigns.show_flip)}
+  def handle_event("toggle_entrance", _params, socket) do
+    {:noreply, assign(socket, show_entrance: !socket.assigns.show_entrance)}
   end
 
   def handle_event("toggle_layout", _params, socket) do
@@ -187,17 +187,29 @@ defmodule DevWeb.AppWeb.DemoLive do
 
       <%!-- ─── Entrance / Exit Presets ─── --%>
       <.motion tag="section" layout={true} id="sec-entrance">
-        <.section_head title="Entrance / Exit Presets" desc="Scroll away and back to replay." />
+        <.section_head
+          title="Entrance / Exit Presets"
+          desc="Toggle to replay every preset's entrance and its matching exit."
+        />
         <.group>
+          <button
+            phx-click="toggle_entrance"
+            class="btn btn-sm mb-4 rounded-full border-base-300 bg-base-100 shadow-sm"
+          >
+            {if @show_entrance, do: "Play exit", else: "Play entrance"}
+          </button>
           <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
-            <.motion
-              :for={{name, i} <- Enum.with_index(@entrance_presets)}
-              id={"p-#{name}"}
-              in_view={%{action: name, repeat: true, duration: 1500}}
-              class={tile(i)}
-            >
-              <span class="text-sm font-medium">{name}</span>
-            </.motion>
+            <div :for={{name, i} <- Enum.with_index(@entrance_presets)} class="h-[4.5rem]">
+              <.motion
+                :if={@show_entrance}
+                id={"p-#{name}"}
+                animate={%{action: name, duration: 500}}
+                exit={%{action: name, duration: 500}}
+                class={tile(i, "h-full p-4 sm:p-6")}
+              >
+                <span class="text-sm font-medium">{name}</span>
+              </.motion>
+            </div>
           </div>
         </.group>
       </.motion>
@@ -320,42 +332,6 @@ defmodule DevWeb.AppWeb.DemoLive do
             >
               <span class="text-sm font-bold">Orbit</span>
             </.motion>
-          </div>
-        </.group>
-      </.motion>
-
-      <%!-- ─── Exit Animations ─── --%>
-      <.motion tag="section" layout={true} id="sec-exit">
-        <.section_head title="Exit Animations" desc="Toggle to see exit animations." />
-        <.group>
-          <button
-            phx-click="toggle_flip"
-            class="btn btn-sm mb-4 rounded-full border-base-300 bg-base-100 shadow-sm"
-          >
-            {if @show_flip, do: "Remove cards", else: "Show cards"}
-          </button>
-          <div class="grid grid-cols-2 gap-3">
-            <%= if @show_flip do %>
-              <.motion
-                id="flip-x-card"
-                animate="flip-x"
-                exit={%{action: "flip-x", duration: 500}}
-                duration={600}
-                class={tile(0)}
-              >
-                <span class="text-sm font-medium">flip-x</span>
-              </.motion>
-
-              <.motion
-                id="flip-y-card"
-                animate="flip-y"
-                exit={%{action: "flip-y", duration: 500}}
-                duration={600}
-                class={tile(1)}
-              >
-                <span class="text-sm font-medium">flip-y</span>
-              </.motion>
-            <% end %>
           </div>
         </.group>
       </.motion>
@@ -810,9 +786,9 @@ defmodule DevWeb.AppWeb.DemoLive do
   # Consistent large-title rhythm for every demo section: a tracked-in title with
   # a quiet one-line caption. Pass `desc` for plain text, or an inner block when
   # the caption needs inline markup (e.g. a <code> snippet).
-  attr :title, :string, required: true
-  attr :desc, :string, default: nil
-  slot :inner_block
+  attr(:title, :string, required: true)
+  attr(:desc, :string, default: nil)
+  slot(:inner_block)
 
   defp section_head(assigns) do
     ~H"""
@@ -832,8 +808,8 @@ defmodule DevWeb.AppWeb.DemoLive do
   # ─── Grouped surface ───
   # The iOS "grouped list" container: a soft, rounded panel a step below the tiles
   # it holds, so the tiles read as a set without any hard chrome.
-  attr :class, :string, default: nil
-  slot :inner_block, required: true
+  attr(:class, :string, default: nil)
+  slot(:inner_block, required: true)
 
   defp group(assigns) do
     ~H"""
@@ -847,9 +823,9 @@ defmodule DevWeb.AppWeb.DemoLive do
   # Small, self-contained section that credits the maintainer and links to the
   # project. Kept as its own component so a donate button can slot into the
   # `actions` area later without disturbing the demo layout.
-  attr :maintainer, :string, required: true
-  attr :maintainer_url, :string, required: true
-  attr :github_url, :string, required: true
+  attr(:maintainer, :string, required: true)
+  attr(:maintainer_url, :string, required: true)
+  attr(:github_url, :string, required: true)
 
   defp owner_card(assigns) do
     ~H"""
